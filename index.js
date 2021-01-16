@@ -9,19 +9,28 @@ import csvToJson from 'csvtojson';
  * @property {string} author
  */
 
- /**
-  * @typedef {Object} ChapterMetadata
-  * @property {string} title
-  * @property {number} startTime
-  * @property {number} endTime
-  */
+/**
+ * @typedef {Object} ChapterMetadata
+ * @property {string} title
+ * @property {number} startTime
+ * @property {number} endTime
+ */
 
- /**
-  * Generates the chapters list as an array with millisecond timestamps
-  * @param {string} csvFilename 
-  * @returns {ChapterMetadata[]}
-  */
- async function processChapters(csvFilename)  {
+/**
+ * Escapes text for FFMETA
+ * @param {string} text 
+ * @returns {string}
+ */
+function escape(text) {
+  return text.replace(/([=;#\\\n])/g, '\$1')
+}
+
+/**
+ * Generates the chapters list as an array with millisecond timestamps
+ * @param {string} csvFilename 
+ * @returns {ChapterMetadata[]}
+ */
+async function processChapters(csvFilename)  {
   if(!fs.existsSync(csvFilename)) {
     throw new Error(`File '${csvFilename}' does not exist.`);
   }
@@ -31,6 +40,7 @@ import csvToJson from 'csvtojson';
   /** @type ChapterMetadata[] */
   const chapters = await csvToJson({
     colParser: {
+      title: escape,
       startTime: f => Date.parse(`2000-01-01T${f}Z`) - referenceDate,
       endTime: f => Date.parse(`2000-01-01T${f}Z`) - referenceDate
     }
@@ -64,19 +74,19 @@ import csvToJson from 'csvtojson';
   }
 
   return chapters;
- }
+}
 
- /**
-  * Generates an FFMETA structure from the provided arguments.
-  * @param {Arguments} argv 
-  */
+/**
+ * Generates an FFMETA structure from the provided arguments.
+ * @param {Arguments} argv 
+ */
 export default async function index(argv) {
   const template = fs.readFileSync(`${__dirname}/ffmeta.mustache`);
   
   const tags = [];
   for(const key of ['title', 'author']) {
     if(key in argv) {
-      tags.push({key, value: argv[key]});
+      tags.push({key, value: escape(argv[key])});
     }
   }
 
