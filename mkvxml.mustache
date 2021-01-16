@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE Chapters SYSTEM "matroskachapters.dtd">
+
+<Chapters>
+  <EditionEntry>
+    {{#chapters}}
+    <ChapterAtom>
+      <ChapterTimeStart>{{startTime}}</ChapterTimeStart>
+      <ChapterDisplay>
+        <ChapterString>{{title}}</ChapterString>
+        <ChapterLanguage>eng</ChapterLanguage>
+      </ChapterDisplay>
+    </ChapterAtom>
+    {{/chapters}}
+  </EditionEntry>
+</Chapters>

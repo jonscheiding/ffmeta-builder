@@ -45,37 +45,37 @@ async function processChapters(csvFilename)  {
   const chapters = await csvToJson({
     colParser: {
       title: escape,
-      startTime: f => Date.parse(`2000-01-01T${f}Z`) - referenceDate,
-      endTime: f => Date.parse(`2000-01-01T${f}Z`) - referenceDate
+      // startTime: f => Date.parse(`2000-01-01T${f}Z`) - referenceDate,
+      // endTime: f => Date.parse(`2000-01-01T${f}Z`) - referenceDate
     }
   }).fromFile(csvFilename);
 
-  for(let i = 0; i < chapters.length; i++) {
-    if(!isNumeric(chapters[i].startTime)) {
-      if(i === 0) {
-        console.warn('First chapter does not have a start time; assuming 0:00:00');
-        chapters[i].startTime = 0;
-      } else {
-        if(!isNumeric(chapters[i - 1].endTime)) {
-          console.warn(`Chapter ${i + 1} does not have a start time, and previous chapter does not have an end time; metadata will not be generate correctly.`);
-        } else {
-          chapters[i].startTime = chapters[i - 1].endTime;
-        }
-      }
-    }
+  // for(let i = 0; i < chapters.length; i++) {
+  //   if(!isNumeric(chapters[i].startTime)) {
+  //     if(i === 0) {
+  //       console.warn('First chapter does not have a start time; assuming 0:00:00');
+  //       chapters[i].startTime = 0;
+  //     } else {
+  //       if(!isNumeric(chapters[i - 1].endTime)) {
+  //         console.warn(`Chapter ${i + 1} does not have a start time, and previous chapter does not have an end time; metadata will not be generate correctly.`);
+  //       } else {
+  //         chapters[i].startTime = chapters[i - 1].endTime;
+  //       }
+  //     }
+  //   }
 
-    if(!isNumeric(chapters[i].endTime)) {
-      if(i === chapters.length - 1) {
-        console.warn('Last chapter does not have an end time; metadata will not generate correctly.');
-      } else {
-        if(!isNumeric(chapters[i + 1].startTime)) {
-          console.warn(`Chapter ${i + 1} does not have an end time, and following chapter does not have a start time; metadata will not generate correctly.`);
-        } else {
-          chapters[i].endTime = chapters[i + 1].startTime;
-        }
-      }
-    }
-  }
+  //   if(!isNumeric(chapters[i].endTime)) {
+  //     if(i === chapters.length - 1) {
+  //       console.warn('Last chapter does not have an end time; metadata will not generate correctly.');
+  //     } else {
+  //       if(!isNumeric(chapters[i + 1].startTime)) {
+  //         console.warn(`Chapter ${i + 1} does not have an end time, and following chapter does not have a start time; metadata will not generate correctly.`);
+  //       } else {
+  //         chapters[i].endTime = chapters[i + 1].startTime;
+  //       }
+  //     }
+  //   }
+  // }
 
   return chapters;
 }
@@ -85,7 +85,7 @@ async function processChapters(csvFilename)  {
  * @param {Arguments} argv 
  */
 export default async function index(argv) {
-  const template = fs.readFileSync(`${__dirname}/ffmeta.mustache`);
+  const template = fs.readFileSync(`${__dirname}/mkvxml.mustache`);
   
   const tags = [];
   for(const key of ['title', 'author']) {
