@@ -25,6 +25,10 @@ function escape(text) {
   return text.replace(/([=;#\\\n])/g, '\$1')
 }
 
+function isNumeric(value) {
+  return typeof(value) === 'number' && !isNaN(value);
+}
+
 /**
  * Generates the chapters list as an array with millisecond timestamps
  * @param {string} csvFilename 
@@ -47,12 +51,12 @@ async function processChapters(csvFilename)  {
   }).fromFile(csvFilename);
 
   for(let i = 0; i < chapters.length; i++) {
-    if(chapters[i].startTime == null) {
+    if(!isNumeric(chapters[i].startTime)) {
       if(i === 0) {
         console.warn('First chapter does not have a start time; assuming 0:00:00');
         chapters[i].startTime = 0;
       } else {
-        if(!chapters[i - 1].endTime) {
+        if(!isNumeric(chapters[i - 1].endTime)) {
           console.warn(`Chapter ${i + 1} does not have a start time, and previous chapter does not have an end time; metadata will not be generate correctly.`);
         } else {
           chapters[i].startTime = chapters[i - 1].endTime;
@@ -60,12 +64,12 @@ async function processChapters(csvFilename)  {
       }
     }
 
-    if(chapters[i].endTime == null) {
+    if(!isNumeric(chapters[i].endTime)) {
       if(i === chapters.length - 1) {
         console.warn('Last chapter does not have an end time; metadata will not generate correctly.');
       } else {
-        if(!chapters[i + 1].startTime) {
-          console.warn(`Chapter ${i} does not have an end time, and following chapter does not have a start time; metadata will not generate correctly.`);
+        if(!isNumeric(chapters[i + 1].startTime)) {
+          console.warn(`Chapter ${i + 1} does not have an end time, and following chapter does not have a start time; metadata will not generate correctly.`);
         } else {
           chapters[i].endTime = chapters[i + 1].startTime;
         }
