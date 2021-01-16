@@ -1,0 +1,17 @@
+#! /usr/bin/env node
+require('@babel/register');
+const yargs = require('yargs');
+
+const index = require('./index').default;
+
+const argv = yargs
+  .command('$0', 'Generate FFMETA file', b => b
+    .option('chapters', { alias: 'c', type: 'string' })
+    .option('title', { alias: 't', type: 'string' })
+    .option('author', { alias: 'a', type: 'string' })
+    .strict()
+    .help()
+  )
+  .argv;
+
+index(argv);
