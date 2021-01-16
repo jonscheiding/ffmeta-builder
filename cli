@@ -14,4 +14,4 @@ const argv = yargs
   )
   .argv;
 
-index(argv);
+index(argv).catch(console.error);
