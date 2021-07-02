@@ -1,6 +1,11 @@
 import fs from 'fs';
 import mustache from 'mustache';
 import csvToJson from 'csvtojson';
+import colors from 'colors';
+
+function warn(msg) {
+  console.warn(colors.yellow(msg));
+}
 
 /**
  * @typedef {Object} Arguments 
@@ -25,8 +30,38 @@ function escape(text) {
   return text.replace(/([=;#\\\n])/g, '\$1')
 }
 
+/**
+ * Checks if value is a valid number
+ * @param {*} value 
+ * @returns {boolean}
+ */
 function isNumeric(value) {
   return typeof(value) === 'number' && !isNaN(value);
+}
+
+/**
+ * Parses value as a date
+ * @param {string} value 
+ */
+function parseTime(value) {
+  if(!value) return undefined;
+  
+  const referenceDate = Date.parse("2000-01-01T00:00:00Z");
+
+  //
+  // Allow the common form of "0:00:00"
+  //
+  if(value.match(/^\d:\d\d:\d\d$/)) {
+    value = '0' + value;
+  }
+
+  const parsedDate = Date.parse(`2000-01-01T${value}Z`);
+
+  if(!isNumeric(parsedDate)) {
+    warn(`Value '${value}' could not be parsed as a time.`);
+  }
+
+  return parsedDate - referenceDate;
 }
 
 /**
@@ -45,19 +80,19 @@ async function processChapters(csvFilename)  {
   const chapters = await csvToJson({
     colParser: {
       title: escape,
-      startTime: f => Date.parse(`2000-01-01T${f}Z`) - referenceDate,
-      endTime: f => Date.parse(`2000-01-01T${f}Z`) - referenceDate
+      startTime: f => parseTime(f),
+      endTime: f => parseTime(f)
     }
   }).fromFile(csvFilename);
 
   for(let i = 0; i < chapters.length; i++) {
     if(!isNumeric(chapters[i].startTime)) {
       if(i === 0) {
-        console.warn('First chapter does not have a start time; assuming 0:00:00');
+        warn('First chapter does not have a start time; assuming 0:00:00');
         chapters[i].startTime = 0;
       } else {
         if(!isNumeric(chapters[i - 1].endTime)) {
-          console.warn(`Chapter ${i + 1} does not have a start time, and previous chapter does not have an end time; metadata will not be generate correctly.`);
+          warn(`Chapter ${i + 1} does not have a start time, and previous chapter does not have an end time; metadata will not be generate correctly.`);
         } else {
           chapters[i].startTime = chapters[i - 1].endTime;
         }
@@ -66,10 +101,10 @@ async function processChapters(csvFilename)  {
 
     if(!isNumeric(chapters[i].endTime)) {
       if(i === chapters.length - 1) {
-        console.warn('Last chapter does not have an end time; metadata will not generate correctly.');
+        warn('Last chapter does not have an end time; metadata will not generate correctly.');
       } else {
         if(!isNumeric(chapters[i + 1].startTime)) {
-          console.warn(`Chapter ${i + 1} does not have an end time, and following chapter does not have a start time; metadata will not generate correctly.`);
+          warn(`Chapter ${i + 1} does not have an end time, and following chapter does not have a start time; metadata will not generate correctly.`);
         } else {
           chapters[i].endTime = chapters[i + 1].startTime;
         }
