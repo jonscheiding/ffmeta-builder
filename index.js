@@ -1,7 +1,9 @@
 import fs from 'fs';
+import { spawn } from 'child_process';
 import mustache from 'mustache';
 import csvToJson from 'csvtojson';
 import colors from 'colors';
+import temp from 'temp';
 
 function warn(msg) {
   console.warn(colors.yellow(msg));
@@ -12,6 +14,8 @@ function warn(msg) {
  * @property {string} chapters
  * @property {string} title
  * @property {string} author
+ * @property {string} input
+ * @property {string} output
  */
 
 /**
@@ -119,7 +123,7 @@ async function processChapters(csvFilename)  {
  * Generates an FFMETA structure from the provided arguments.
  * @param {Arguments} argv 
  */
-export default async function index(argv) {
+ async function generateMeta(argv) {
   const template = fs.readFileSync(`${__dirname}/ffmeta.mustache`);
   
   const tags = [];
@@ -136,5 +140,43 @@ export default async function index(argv) {
 
   const metadata = { tags, chapters };
   
-  console.log(mustache.render(template.toString(), metadata));
+  return mustache.render(template.toString(), metadata);
+}
+
+/**
+ * Generates an FFMETA structure from the provided arguments
+ * and outputs it to the console.
+ * @param {Arguments} argv 
+ */
+export async function generate(argv) {
+  console.log(await generateMeta(argv));
+}
+
+/**
+ * Generates an FFMETA structure from the provided arguments
+ * and uses ffmpeg to embed it into a video file.
+ * @param {Arguments} argv 
+ */
+export async function embed(argv) {
+  temp.track();
+  const ffmeta = temp.openSync();
+
+  fs.writeFileSync(ffmeta.fd, await generateMeta(argv));
+  await new Promise((resolve, reject) => {
+    const ffmpeg = spawn('ffmpeg', 
+      [
+        '-i', argv.input,
+        '-i', ffmeta.path,
+        '-map_metadata', '1',
+        '-c', 'copy',
+        argv.output
+      ],
+      {stdio: [process.stdin, process.stdout, process.stderr]});
+
+    ffmpeg.on('error', reject);
+    ffmpeg.on('close', code => {
+      console.log(`Exited with code ${code}.`);
+      resolve(code);
+    });
+  });
 }

@@ -1,26 +1,45 @@
 #! /usr/bin/env node
 require('@babel/register');
 const yargs = require('yargs');
+const hasbin = require('hasbin');
 
-const index = require('./index').default;
+const { generate, embed } = require('./index');
 
-const argv = yargs
-  .command('$0', 'Generate FFMETA file', b => b
-    .option('chapters', { 
-      alias: 'c', type: 'string',
-      description: 'Path to a CSV file containing the chapter list. See README for more details.'
+yargs
+  .option('chapters', { 
+    alias: 'c', type: 'string',
+    description: 'Path to a CSV file containing the chapter list. See README for more details.',
+    global: true
+  })
+  .option('title', { 
+    alias: 't', type: 'string',
+    description: 'The title to embed for the video.',
+    global: true
+  })
+  .option('author', { 
+    alias: 'a', type: 'string',
+    description: 'The author to embed for the video.',
+    global: true
+  })
+  .strict()
+  .help()
+  .command('generate', 'Generate an FFMETA file to the console.', b => b, generate)
+  .command('embed', 'Embed chapters into a video file using FFMPEG.', b => b
+    .option('input', {
+      alias: 'i', type: 'string',
+      description: 'Path to a video file to update with chapters.'
     })
-    .option('title', { 
-      alias: 't', type: 'string',
-      description: 'The title to embed for the video.'
+    .option('output', {
+      alias: 'o', type: 'string',
+      description: 'Path for the updated video file.'
     })
-    .option('author', { 
-      alias: 'a', type: 'string',
-      description: 'The author to embed for the video.'
+    .demandOption('input').demandOption('output')
+    .check(() => {
+      const hasFfmpeg = hasbin.sync('ffmpeg');
+      if(!hasFfmpeg) return 'ffmpeg does not appear to be installed.';
+      return true;
     })
-    .strict()
-    .help()
+    ,
+    embed
   )
   .argv;
-
-index(argv).catch(console.error);
